@@ -1,0 +1,13 @@
+# Игнорировать все системные и лишние файлы
+*.exe
+*.tgz
+*.dat
+*.msix
+*.ini
+*.pyc
+*.log
+*.DS_Store
+__pycache__/
+venv/
+.env
+*.db

@@ -12,7 +12,7 @@ from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
 api_id = 21919270
 api_hash = 'a25517a604bf99d413bbf3140d3b5962'
 phone = '+380990042029'
-openai.api_key = os.getenv('OPENAI_API_KEY', '***REMOVED***')
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Создаём клиент OpenAI
 client_openai = openai.OpenAI(api_key=openai.api_key)
@@ -32,7 +32,7 @@ phone_pattern = r'\+?\d[\d\s\-\(\)]{7,}\d'
 username_pattern = r'@\w+'
 url_pattern = r'https?://\S+'
 
-# 🔍 Ключевые слова (широкий IT-охват)
+# 🔍 Ключевые слова
 keywords = [
     'code', 'coding', 'программирование', 'разработка', 'development',
     'бот', 'bot', 'автоматизация', 'automation', 'AI', 'ИИ',
@@ -53,7 +53,6 @@ def clean_text(text):
     text = re.sub(url_pattern, '[ссылка удалена]', text)
     return text.strip()
 
-# Генерация хука с смайлами
 def generate_hook(text):
     prompt = f"Придумай короткий (1-5 слов), лёгкий и завлекающий заголовок для IT-поста с смайликами:\n{text}"
     response = client_openai.chat.completions.create(
@@ -63,7 +62,6 @@ def generate_hook(text):
     )
     return response.choices[0].message.content.strip()
 
-# Уникализация текста с смайлами и шрифтами
 def unique_text(text):
     prompt = f"Перепиши текст в лёгком, простом и завлекающем стиле для IT-шников и фрилансеров, добавь смайлики и используй **жирный** или *курсив* для выделения:\n{text}"
     response = client_openai.chat.completions.create(
@@ -73,7 +71,6 @@ def unique_text(text):
     )
     return response.choices[0].message.content
 
-# Хэштеги с смайлами
 def add_it_hashtags(text):
     hashtags = []
     if re.search(r'code|coding|программирование|разработка|development', text, re.IGNORECASE):
@@ -122,7 +119,6 @@ async def copy_filtered_messages():
     last_message_id = get_last_message_id()
     all_messages = []
 
-    # Собираем ТОЛЬКО НОВЫЕ сообщения (id > last_message_id)
     for source_channel in source_channels:
         try:
             source = await client.get_input_entity(source_channel)
@@ -137,12 +133,10 @@ async def copy_filtered_messages():
     posts_to_send = all_messages[:MAX_POSTS_PER_DAY]
     message_count = 0
 
-    # Льём 10 постов: первый сразу, остальные через 1 час
     for i, (source_channel, message) in enumerate(posts_to_send):
         media_files = []
         cleaned_text = clean_text(message.text or '')
         
-        # Генерируем хук и текст
         hook = generate_hook(cleaned_text)
         unique_caption = unique_text(cleaned_text)
         final_text = f"{hook}\n\n{unique_caption}"
@@ -164,7 +158,7 @@ async def copy_filtered_messages():
 
             message_count += 1
             save_last_message_id(message.id)
-            if i < len(posts_to_send) - 1:  # Не ждём после последнего поста
+            if i < len(posts_to_send) - 1:
                 await asyncio.sleep(3600)  # 1 час = 3600 секунд
 
         except RPCError as e:
@@ -176,11 +170,9 @@ async def copy_filtered_messages():
     print(f"\n🎉 День завершён! Скопировано {message_count} сообщений.")
     await client.disconnect()
 
-# Функция для автозапуска
 def job():
     asyncio.run(copy_filtered_messages())
 
-# Запускаем каждые 24 часа
 def run_forever():
     while True:
         job()

@@ -1,3 +1,4 @@
 last_message_id.txt
 neirocoding_test.py
 telegram_session.session  # Если не хочешь пушить сессию
+secret.txt
